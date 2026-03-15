@@ -2,7 +2,10 @@ package br.com.pereiraeng.core;
 
 import java.util.regex.Pattern;
 
-public class Uuid {
+/**
+ * universally unique identifier
+ */
+public class UuidUtils {
 
 	/**
 	 * Tamanho do código UUID, em número de caracteres

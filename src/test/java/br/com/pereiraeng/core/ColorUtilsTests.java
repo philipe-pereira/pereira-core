@@ -1,11 +1,9 @@
 package br.com.pereiraeng.core;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.awt.Color;
 
 import org.junit.jupiter.api.Test;
-
-import br.com.pereiraeng.core.ColorUtils;
 
 class ColorUtilsTests {
 

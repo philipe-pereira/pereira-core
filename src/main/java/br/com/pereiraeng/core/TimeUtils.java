@@ -10,15 +10,20 @@ import java.sql.Time;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.SortedSet;
 import java.util.TimeZone;
+import java.util.TreeSet;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JList;
+
+import br.com.pereiraeng.core.collections.SetUtils;
 
 public class TimeUtils {
 
@@ -882,9 +887,9 @@ public class TimeUtils {
 
 	/**
 	 * Função que converte um número inteiro em uma data, seguindo a lógica inversa
-	 * daquela utilizada na função {@link TimeUtils#toInt(Calendar) toInt}, de modo que
-	 * ambas funções são bijetoras (i.e. cada entrada corresponde a uma e somente
-	 * uma saída).
+	 * daquela utilizada na função {@link TimeUtils#toInt(Calendar) toInt}, de modo
+	 * que ambas funções são bijetoras (i.e. cada entrada corresponde a uma e
+	 * somente uma saída).
 	 * 
 	 * @param ic inteiro a ser convertido.
 	 * @return data equivalente
@@ -916,8 +921,9 @@ public class TimeUtils {
 	/**
 	 * Função que converte uma data em um número inteiro. Tal número é o quantidade
 	 * de dias existentes entre a dada data e o instante 0 do {@link Calendar}. Essa
-	 * função é a inversa da {@link TimeUtils#int2date(int)}, sendo que ambas funções
-	 * são bijetoras (i.e. cada entrada corresponde a uma e somente uma saída).
+	 * função é a inversa da {@link TimeUtils#int2date(int)}, sendo que ambas
+	 * funções são bijetoras (i.e. cada entrada corresponde a uma e somente uma
+	 * saída).
 	 * 
 	 * @param c data a ser convertida
 	 * @return inteiro equivalente
@@ -929,8 +935,9 @@ public class TimeUtils {
 	/**
 	 * Função que converte uma data em um número inteiro. Tal número é o quantidade
 	 * de dias existentes entre a dada data e o instante 0 do {@link Calendar}. Essa
-	 * função é a inversa da {@link TimeUtils#int2date(int)}, sendo que ambas funções
-	 * são bijetoras (i.e. cada entrada corresponde a uma e somente uma saída).
+	 * função é a inversa da {@link TimeUtils#int2date(int)}, sendo que ambas
+	 * funções são bijetoras (i.e. cada entrada corresponde a uma e somente uma
+	 * saída).
 	 * 
 	 * @param d data a ser convertida
 	 * @return inteiro equivalente
@@ -1193,7 +1200,7 @@ public class TimeUtils {
 	 * Função que retorna o objeto {@link Date} associado a uma sequência de
 	 * caracteres que obdece a um dado formato
 	 * 
-	 * @param str   data num dado formato
+	 * @param str    data num dado formato
 	 * @param format formato a ser seguido (ver {@link SimpleDateFormat})
 	 * @param locale parâmetros locais
 	 * @return objeto {@link Date}
@@ -1234,5 +1241,107 @@ public class TimeUtils {
 			c.add(Calendar.MONTH, 1);
 		}
 		return StringUtils.getPatternNFL(months);
+	}
+
+	/**
+	 * Função que retorna as divisões de tempo que marcam a
+	 * 
+	 * @param inf    instante inicial do período
+	 * @param sup    instante final do período
+	 * @param limits tabela de dispersão ordenada que associa para cada fonte de
+	 *               dados (representada pelo seu inteiro: {@link Comm#NO_ACCESS},
+	 *               {@link #ON_LINE_1}, {@link #REDE_1}, {@link #OFF_LINE_1},
+	 *               {@link #REDE_2}, {@link #OFF_LINE_2}, {@link #REDE_3} e
+	 *               {@link #OFF_LINE_3}) um vetor de duas posições com as datas do
+	 *               início e fim do período para o qual há medições. A ordem é dada
+	 *               pelo prioridade de conexão
+	 * @return vetor ordenado com os instantes de tempo em que será necessário fazer
+	 *         transições de fonte de dados
+	 */
+	public static Calendar[] getSc(Calendar inf, Calendar sup, Collection<Calendar[]> limits) {
+		// transições de horário
+		TreeSet<Calendar> trans = new TreeSet<>();
+		for (Calendar[] ls : limits) {
+			if (trans.size() < 2) {
+				trans.add(ls[0]);
+				trans.add(ls[1]);
+			} else {
+				Calendar f = trans.first();
+				Calendar l = trans.last();
+				if (ls[0].before(f) || ls[0].after(l))
+					trans.add(ls[0]);
+				if (ls[1].after(l) || ls[1].before(f))
+					trans.add(ls[1]);
+			}
+		}
+
+		SortedSet<Calendar> out = trans.subSet(inf, sup);
+		return out.toArray(new Calendar[out.size()]);
+	}
+
+	/**
+	 * Função que retorna um conjunto ordenado de datas que delimitam os registros
+	 * contidos em somente um arquivo de dados.
+	 * 
+	 * @param start    data de início dos registros (pode ser <code>null</code>,
+	 *                 sendo que neste caso o argumento inf será o limite inferior
+	 *                 do primeiro intervalo)
+	 * @param inf      início do período solicitado
+	 * @param sup      final do período solicitado
+	 * @param passagem se <code>true</code>, insere divisões a cada mudança de ano;
+	 *                 <code>false</code> senão
+	 * @param scs      datas de mudanças de servidor
+	 * @return conjunto ordenado de datas, sendo que a primeira e a última do
+	 *         conjunto são os extremos do intervalo e no meio há a data de mudança
+	 *         de servidor e as mudanças de ano (o conjunto contará com no mínimo
+	 *         dois elementos)
+	 */
+	public static TreeSet<Calendar> getDivisions(Calendar start, Calendar inf, Calendar sup, boolean passagem,
+			Calendar... scs) {
+		TreeSet<Calendar> division = new TreeSet<>();
+
+		// começa-se ou no primeiro registro do servidor ou no começo do período
+		if (start != null ? inf.before(start) : false)
+			inf = start;
+		division.add(inf);
+
+		// se houver mudança(s) de servidor no período, incluir na lista
+		for (Calendar sc : scs)
+			if (sup.after(sc) && inf.before(sc))
+				division.add(sc);
+
+		// passagens de ano
+		if (passagem) {
+			int passagens = sup.get(Calendar.YEAR) - inf.get(Calendar.YEAR);
+			for (int i = 1; i <= passagens; i++) {
+				division.add(new GregorianCalendar(inf.get(Calendar.YEAR) + i, 0, 1, 0, 0));
+			}
+		}
+
+		// último registro
+		if (!sup.after(inf)) {
+			// se o limite superior do período não vier depois do limite
+			// inferior (i.e., quando se pede somente um instante de horário)
+			// então o limite superior deve ser o inferior mais um acréscimo
+			Calendar c = (Calendar) inf.clone();
+			c.add(Calendar.MILLISECOND, 1);
+			division.add(c);
+		} else
+			division.add(sup);
+
+		return division;
+	}
+
+	/**
+	 * Função que, a partir de uma série de períodos de tempo, designados pelos seus
+	 * instantes de tempo inicial e final, retorna os limites inferior e superior. 
+	 * 
+	 * @param ps série de períodos de tempo 
+	 * @return vetor com duas posições com os limites inferior e superior
+	 */
+	public static Calendar[] getLimits(Collection<Calendar[]> ps) {
+		Calendar[] out = new Calendar[2];
+		SetUtils.union(out, ps);
+		return out;
 	}
 }
