@@ -14,17 +14,17 @@ public class LocaleConfig {
 			String language = rb.getString("language");
 			String country = rb.getString("country");
 
+//			lc = Locale.of(language, country);
 			lc = new Locale(language, country);
 		} catch (MissingResourceException e) {
 		}
 	}
 
 	/**
-	 * Função que retorna um <code>String</code> a partir de um dado
-	 * palavra-chave, em função das configurações locais
+	 * Função que retorna um <code>String</code> a partir de um dado palavra-chave,
+	 * em função das configurações locais
 	 * 
-	 * @param key
-	 *            palavra-chave associada
+	 * @param key palavra-chave associada
 	 * @return <code>String</code> correspondente, ou a chave caso não haja
 	 *         correspondência
 	 */

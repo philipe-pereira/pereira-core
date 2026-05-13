@@ -5,11 +5,10 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import br.com.pereiraeng.core.collections.MapUtils;
-
 import java.util.Set;
 import java.util.TreeMap;
+
+import br.com.pereiraeng.core.collections.MapUtils;
 
 /**
  * Classe do objeto que representa uma tabela de dispersão onde cada objeto pode

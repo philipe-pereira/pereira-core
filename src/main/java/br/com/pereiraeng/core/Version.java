@@ -1,5 +1,8 @@
 package br.com.pereiraeng.core;
 
+/**
+ * Classe do objeto que representa a versão de um aplicativo
+ */
 public class Version implements Comparable<Version> {
 
 	private final int major;
@@ -8,12 +11,24 @@ public class Version implements Comparable<Version> {
 
 	private final int patch;
 
+	/**
+	 * Construtor do objeto que representa a versão de um aplicativo
+	 * 
+	 * @param major versão maior
+	 * @param minor versão menor
+	 * @param patch patch
+	 */
 	public Version(int major, int minor, int patch) {
 		this.major = major;
 		this.minor = minor;
 		this.patch = patch;
 	}
 
+	/**
+	 * Construtor do objeto que representa a versão de um aplicativo
+	 * 
+	 * @param string sequência de caracteres na forma [major].[minor].[patch]
+	 */
 	public Version(String string) {
 		String[] majorMinorPatch = string.split("\\.");
 		this.major = Integer.parseInt(majorMinorPatch[0]);

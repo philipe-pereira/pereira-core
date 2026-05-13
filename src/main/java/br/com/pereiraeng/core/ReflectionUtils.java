@@ -1,10 +1,12 @@
 package br.com.pereiraeng.core;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Calendar;
 import java.util.Date;
 
 /**
+ * Classe com funções utilitárias do Reflection
  * 
  * @author Philipe PEREIRA
  *
@@ -26,39 +28,40 @@ public class ReflectionUtils {
 	 * chamado quando a classe do objeto não possui construtor sem argumentos, de
 	 * modo que não é possível instanciar um objeto sem haver tais argumentos.
 	 * 
-	 * @param class1 classe do objeto
+	 * @param clazz classe do objeto
 	 * @return objeto padrão
 	 */
-	public static Object getNull(Class<?> class1) {
-		if (Object.class.equals(class1))
+	public static Object getNull(Class<?> clazz) {
+		if (Object.class.equals(clazz))
 			return null;
 
 		Object out = null;
 		try { // construtor padrão é bom...
-			out = class1.newInstance();
-		} catch (InstantiationException | IllegalAccessException e) {
+//			class1.getConstructor();
+			out = clazz.getDeclaredConstructor().newInstance();
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+				| NoSuchMethodException | SecurityException e) {
 		}
 
-		if (out == null) {
-			// não tem construtor padrão...
-			if (Integer.class.equals(class1))
+		if (out == null) { // não tem construtor padrão...
+			if (Integer.class.equals(clazz))
 				out = 0;
-			else if (Long.class.equals(class1))
+			else if (Long.class.equals(clazz))
 				out = 0L;
-			else if (Double.class.equals(class1))
+			else if (Double.class.equals(clazz))
 				out = 0.;
-			else if (Boolean.class.equals(class1))
+			else if (Boolean.class.equals(clazz))
 				out = false;
-			else if (Float.class.equals(class1))
+			else if (Float.class.equals(clazz))
 				out = 0f;
-			else if (Calendar.class.equals(class1))
+			else if (Calendar.class.equals(clazz))
 				out = Calendar.getInstance();
-			else if (Date.class.equals(class1))
+			else if (Date.class.equals(clazz))
 				out = Calendar.getInstance().getTime();
-			else if (class1.isEnum())
-				out = class1.getEnumConstants()[0];
+			else if (clazz.isEnum())
+				out = clazz.getEnumConstants()[0];
 			else
-				System.err.println(class1 + " não tem construtor default");
+				System.err.println(clazz + " não tem construtor default");
 		}
 
 		return out;
@@ -81,14 +84,37 @@ public class ReflectionUtils {
 	@SuppressWarnings("unchecked")
 	public static <T extends Number> T double2number(T t, double z) {
 		if (t instanceof Double)
-			return (T) new Double(z);
+			return (T) Double.valueOf(z);
 		else if (t instanceof Integer)
 			return (T) Integer.valueOf((int) z);
 		else if (t instanceof Float)
-			return (T) new Float(z);
+			return (T) Float.valueOf((float) z);
 		else if (t instanceof Long)
-			return (T) new Long((long) z);
+			return (T) Long.valueOf((long) z);
 		else
 			return null;
+	}
+
+	public static <T> T createInstance(String fullyQualifiedClassName, Class<T> expectedType) {
+		try {
+			Class<?> rawClass = Class.forName(fullyQualifiedClassName);
+
+			if (!expectedType.isAssignableFrom(rawClass)) {
+				throw new IllegalArgumentException(
+						"A classe " + fullyQualifiedClassName + " não é do tipo esperado: " + expectedType.getName());
+			}
+
+			Class<? extends T> typedClass = rawClass.asSubclass(expectedType);
+
+			return typedClass.getDeclaredConstructor().newInstance();
+
+		} catch (ClassNotFoundException e) {
+			throw new IllegalArgumentException("Classe não encontrada: " + fullyQualifiedClassName, e);
+		} catch (NoSuchMethodException e) {
+			throw new IllegalArgumentException(
+					"A classe precisa ter um construtor sem argumentos: " + fullyQualifiedClassName, e);
+		} catch (ReflectiveOperationException e) {
+			throw new RuntimeException("Erro ao instanciar classe: " + fullyQualifiedClassName, e);
+		}
 	}
 }
