@@ -23,6 +23,9 @@ jobs:
           java-version: '8'
           cache: maven
           server-id: github
+          
+      - name: Verify
+        run: mvn -B -ntp verify
 
       - name: Publish package
         run: mvn -B -ntp deploy
